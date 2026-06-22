@@ -784,19 +784,29 @@ async function loadWeather() {
   const strip   = document.getElementById('wxStrip');
   const loading = document.getElementById('wxLoading');
   try {
-    const results = await Promise.all(WX_STATIONS.map(st => {
+    // Datum auf heute + 16 Tage kappen (Open-Meteo Free-Limit)
+    const today = new Date();
+    const maxDate = new Date(today.getTime() + 16 * 86400000).toISOString().slice(0,10);
+
+    const settled = await Promise.allSettled(WX_STATIONS.map(st => {
+      // end_date ggf. auf maxDate deckeln
+      const cappedEnd = st.end > maxDate ? maxDate : st.end;
+      // Nur anfragen, wenn start_date vor cappedEnd liegt
+      if (st.start >= cappedEnd) return Promise.resolve(null);
       const url = 'https://api.open-meteo.com/v1/forecast'
         + '?latitude=' + st.lat + '&longitude=' + st.lon
         + '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum'
         + '&timezone=America%2FSao_Paulo'
-        + '&start_date=' + st.start + '&end_date=' + st.end;
+        + '&start_date=' + st.start + '&end_date=' + cappedEnd;
       return fetch(url)
         .then(r => r.json())
-        .then(d => {
-          if (d.error) throw new Error('API: ' + (d.reason || 'unknown'));
-          return { st, d, stIdx: WX_STATIONS.indexOf(st) };
-        });
+        .then(d => d.error ? null : { st, d, stIdx: WX_STATIONS.indexOf(st) });
     }));
+
+    // Nur erfolgreiche Ergebnisse verarbeiten – ein Fehler bricht nicht alle ab
+    const results = settled
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
 
     results.forEach(({ st, d, stIdx }) => {
       const daily = d.daily;
