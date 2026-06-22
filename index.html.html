@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Brasilien Reiseplaner 2026</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:#f5f2eb;color:#1a1a1a;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+a{color:inherit;text-decoration:none}
+*{-webkit-user-select:none;-moz-user-select:none;user-select:none}
+a{-webkit-user-select:auto}
+
+/* ── Header ── */
+.hd{background:#1a3a2e;padding:.8rem 1.2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
+.hd-title{color:#e8f5ef;font-size:1.1rem;font-weight:700;letter-spacing:.03em}
+.hd-sub{color:#6db98a;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;margin-top:1px}
+.hd-meta{display:flex;gap:.5rem;flex-wrap:wrap}
+.hd-chip{background:#122820;color:#6db98a;font-size:.66rem;padding:.22rem .55rem;border-radius:20px}
+
+/* ── Station Tabs ── */
+.station-bar{background:#fff;border-bottom:2px solid #e0ddd5;display:flex;overflow-x:auto;padding:0 .75rem;-webkit-overflow-scrolling:touch}
+.s-tab{padding:.75rem 1.05rem;font-size:.88rem;cursor:pointer;border:none;background:none;color:#888;border-bottom:3px solid transparent;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em;transition:color .15s,border-color .15s;touch-action:manipulation}
+.s-tab.active{color:#1a3a2e;border-bottom-color:#e8622a;font-weight:700}
+
+/* ── Day Tabs ── */
+.day-bar{background:#f0ece3;border-bottom:1px solid #ddd9cf;display:flex;overflow-x:auto;padding:.35rem .75rem;gap:.3rem;-webkit-overflow-scrolling:touch}
+.d-tab{padding:.4rem .85rem;font-size:.82rem;cursor:pointer;border:1.5px solid #ccc8be;background:#fff;color:#555;border-radius:20px;white-space:nowrap;transition:all .15s;touch-action:manipulation;flex-shrink:0;min-height:34px}
+.d-tab.active{background:#1a3a2e;color:#fff;border-color:#1a3a2e;font-weight:600}
+
+/* ── Station info ── */
+.station-info{background:#1a3a2e;color:#c5e8d5;padding:.6rem 1.1rem;font-size:.82rem;line-height:1.6}
+
+/* ── MAIN LAYOUT: 65% cards / 35% planner ── */
+.main{display:grid;grid-template-columns:1fr 340px;height:calc(100vh - 138px);overflow:hidden}
+@media(max-width:720px){
+  .main{grid-template-columns:1fr;grid-template-rows:55vh 1fr;height:auto}
+}
+
+/* ── LEFT: Library ── */
+.lib{background:#fff;border-right:1px solid #e0ddd5;display:flex;flex-direction:column;overflow:hidden}
+.lib-head{padding:.65rem 1.1rem;border-bottom:1px solid #eae7e0;font-size:.8rem;color:#888;letter-spacing:.08em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.lib-filter{display:flex;gap:.3rem;padding:.4rem .75rem;border-bottom:1px solid #eae7e0;flex-wrap:wrap;flex-shrink:0}
+.f-btn{font-size:.82rem;padding:.38rem .8rem;border:1.5px solid #ddd;border-radius:14px;cursor:pointer;background:#fff;color:#444;transition:all .12s;touch-action:manipulation;font-weight:500;min-height:36px}
+.f-btn.on{background:#1a3a2e;color:#fff;border-color:#1a3a2e}
+
+/* Scroll hint banner */
+.scroll-hint{background:#fffbf0;border-bottom:1px solid #f0e8c8;padding:.5rem 1.1rem;font-size:.8rem;color:#6a5000;display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+.scroll-hint span{flex:1}
+
+/* ── lib-scroll: allows normal scrolling ── */
+.lib-scroll{
+  flex:1;
+  overflow-y:auto;
+  padding:.85rem;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+.lib-section-title{font-size:.75rem;color:#aaa;letter-spacing:.1em;text-transform:uppercase;margin:.5rem 0 .4rem;padding-left:2px}
+.area-header{font-size:.9rem;font-weight:700;color:#1a3a2e;background:#e8f5ef;border-radius:8px;padding:.45rem .8rem;margin:.8rem 0 .4rem;letter-spacing:.02em}
+
+/* ── Cards (grid layout inside lib-scroll) ── */
+/* ── Cards ── */
+.card-grid{display:grid;grid-template-columns:1fr;gap:.85rem;margin-bottom:.5rem}
+
+.card{
+  background:#f9f7f3;
+  border:2px solid #e4e0d8;
+  border-radius:14px;
+  padding:1.15rem 1.2rem 1.05rem;
+  position:relative;
+  touch-action:pan-y;
+  transition:box-shadow .15s,border-color .15s,transform .1s;
+  cursor:grab;
+}
+.card.drag-ready{
+  border-color:#e8622a;
+  box-shadow:0 4px 18px rgba(232,98,42,.22);
+  transform:scale(1.01);
+}
+.card.is-dragging{
+  opacity:.4;
+  border-color:#bbb;
+  transform:scale(.97);
+}
+
+/* Ghost */
+.drag-ghost{
+  position:fixed;pointer-events:none;z-index:9999;
+  opacity:.92;transform:rotate(1.5deg) scale(1.04);
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+  border-radius:14px;background:#fff;border:2px solid #e8622a;
+  padding:.95rem 1.1rem;width:270px;
+  font-family:'Helvetica Neue',Arial,sans-serif;
+}
+
+.card-top{display:flex;align-items:flex-start;gap:.85rem;margin-bottom:.55rem}
+.card-emoji{font-size:1.65rem;flex-shrink:0;line-height:1.2}
+.card-name{font-size:1.08rem;font-weight:700;line-height:1.35;color:#111}
+.card-meta{font-size:.8rem;color:#555;margin-top:5px;line-height:1.65;display:flex;flex-wrap:wrap;gap:5px}
+.card-type{font-size:.76rem;color:#aaa;margin-top:3px}
+.card-desc{font-size:.92rem;color:#3a3a3a;line-height:1.65;margin-bottom:.55rem}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:.45rem}
+.ctag{font-size:.78rem;padding:4px 10px;border-radius:12px;font-weight:600;line-height:1.3}
+.ctag-easy{background:#e5f2e8;color:#1e5228}
+.ctag-mod{background:#fdeee6;color:#7a2e0a}
+.ctag-veg{background:#e8f5ee;color:#145038}
+.ctag-meat{background:#fde8e8;color:#6b1414}
+.ctag-tip{background:#fff3cd;color:#5a3c00}
+.ctag-rest{background:#e8f0fb;color:#142a80}
+.card-links{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.4rem}
+.card-link{display:inline-flex;align-items:center;gap:5px;font-size:.8rem;padding:6px 13px;border-radius:20px;border:1.5px solid #c8d4e0;color:#1a3a2e;background:#fff;white-space:nowrap;touch-action:manipulation;font-weight:500;min-height:36px}
+.card-link svg{width:12px;height:12px;fill:currentColor;flex-shrink:0}
+
+/* Long-press ring */
+.lp-ring{display:none;position:absolute;top:9px;right:11px}
+.card.holding .lp-ring{display:block}
+.lp-ring svg{width:24px;height:24px;transform:rotate(-90deg)}
+.lp-ring circle{fill:none;stroke:#e8622a;stroke-width:2.5;stroke-dasharray:50;stroke-dashoffset:50;stroke-linecap:round;transition:stroke-dashoffset .22s linear}
+
+.drag-hint-badge{
+  position:absolute;bottom:10px;right:12px;
+  font-size:.7rem;color:#c0b8a8;
+  display:flex;align-items:center;gap:2px;
+}
+
+/* ── RIGHT: Planner (compact) ── */
+.planner{display:flex;flex-direction:column;overflow:hidden;background:#faf8f4}
+.planner-head{padding:.55rem .85rem;border-bottom:1px solid #e0ddd5;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:#fff}
+.planner-title{font-size:.82rem;font-weight:700;color:#1a3a2e}
+.planner-actions{display:flex;gap:.35rem}
+.btn-sm{font-size:.68rem;padding:.25rem .65rem;border-radius:6px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#555;transition:all .12s;touch-action:manipulation}
+.btn-clear{border-color:#e8622a;color:#e8622a}
+.planner-scroll{flex:1;overflow-y:auto;padding:.65rem .75rem;-webkit-overflow-scrolling:touch}
+
+/* ── Timeline (compact) ── */
+.tl-slot{display:flex;gap:.5rem;margin-bottom:.32rem;align-items:flex-start}
+.tl-time-col{width:38px;flex-shrink:0;text-align:right}
+.tl-time-label{font-size:.63rem;color:#2d7a52;font-weight:700;padding-top:9px}
+.tl-line{width:2px;background:#d5e8dc;flex-shrink:0;margin-top:9px;border-radius:2px;position:relative;min-height:46px}
+.tl-dot{width:8px;height:8px;background:#2d7a52;border-radius:50%;border:2px solid #faf8f4;position:absolute;left:-3px;top:0}
+.tl-content{flex:1}
+
+.drop-zone{
+  border:2px dashed #d5d0c6;border-radius:7px;min-height:46px;
+  display:flex;align-items:center;justify-content:center;
+  color:#ccc;font-size:.68rem;background:#fafaf8;padding:.3rem .4rem;
+  transition:border-color .15s,background .15s;
+}
+.drop-zone.drop-active{border-color:#e8622a;background:#fff8f5;color:#e8622a}
+.drop-zone.has-card{border-style:solid;border-color:#e4e0d8;background:#fff;align-items:flex-start;padding:0;color:#1a1a1a}
+
+.placed-wrap{position:relative;width:100%}
+.placed-card{padding:.45rem .55rem;width:100%}
+.placed-name{font-size:.76rem;font-weight:700;display:flex;align-items:center;gap:.35rem}
+.placed-links{display:flex;gap:.25rem;flex-wrap:wrap;margin-top:.22rem}
+.remove-btn{position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:#e8622a;color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;z-index:2}
+
+/* Export bar */
+.export-bar{background:#fff;border-top:1px solid #e0ddd5;padding:.38rem .85rem;font-size:.67rem;color:#aaa;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+.export-bar button{font-size:.67rem;padding:.22rem .6rem;border-radius:5px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#555;touch-action:manipulation}
+
+/* Toast */
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%) translateY(60px);background:#1a3a2e;color:#e8f5ef;padding:.5rem 1rem;border-radius:8px;font-size:.76rem;opacity:0;transition:all .25s;z-index:10000;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+
+@media print{
+  .lib,.station-bar,.day-bar,.lib-filter,.export-bar,.planner-actions,.drag-hint-badge,.card-links,.remove-btn,.scroll-hint,.lp-ring{display:none!important}
+  .main{display:block!important;height:auto!important}
+  .planner,.planner-scroll{overflow:visible!important;height:auto!important}
+  body{background:#fff}
+}
+
+/* ── Weather Strip ── */
+.wx-strip{display:flex;overflow-x:auto;gap:.5rem;padding:.5rem .85rem .45rem;background:#edf4ff;border-bottom:1px solid #c8daf5;-webkit-overflow-scrolling:touch;flex-shrink:0}
+.wx-day{display:flex;flex-direction:column;align-items:center;min-width:58px;gap:2px;cursor:pointer;border-radius:10px;padding:.3rem .4rem;transition:background .15s}
+.wx-day.wx-active{background:#1a3a2e;color:#e8f5ef}
+.wx-day.wx-active .wx-label{color:#8fc4a8}
+.wx-day.wx-active .wx-tmp{color:#fff}
+.wx-label{font-size:.68rem;color:#555;font-weight:600;white-space:nowrap}
+.wx-icon{font-size:1.3rem;line-height:1}
+.wx-tmp{font-size:.75rem;font-weight:700;color:#1a3a2e}
+.wx-rain{font-size:.62rem;color:#4a7aaa}
+.wx-banner{padding:.55rem 1rem;font-size:.82rem;line-height:1.55;flex-shrink:0;border-bottom:1px solid #e0ddd5;display:none}
+.wx-banner.visible{display:flex;align-items:flex-start;gap:.6rem}
+.wx-banner-icon{font-size:1.5rem;flex-shrink:0}
+.wx-banner-text{flex:1;color:#333}
+.wx-banner-text strong{color:#1a3a2e}
+.wx-loading{padding:.4rem 1rem;font-size:.75rem;color:#999;font-style:italic;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div>
+    <div class="hd-title">🌿 Brasilien Reiseplaner 2026</div>
+    <div class="hd-sub">Karte halten → Drag → auf Zeitslot ablegen</div>
+  </div>
+  <div class="hd-meta">
+    <span class="hd-chip">27. Juni – 17. Juli</span>
+    <span class="hd-chip">7 Reisende</span>
+  </div>
+</div>
+
+<div class="station-bar">
+  <button class="s-tab active" onclick="setStation(0,this)">🌿 Salvador</button>
+  <button class="s-tab" onclick="setStation(1,this)">🏛 Brasília</button>
+  <button class="s-tab" onclick="setStation(2,this)">🌊 Manaus</button>
+  <button class="s-tab" onclick="setStation(3,this)">🏖 Praia do Forte</button>
+</div>
+<div class="day-bar" id="dayBar"></div>
+<div class="station-info" id="stationInfo"></div>
+
+<div class="wx-loading" id="wxLoading">🌤 Wetterdaten werden geladen…</div>
+<div class="wx-strip" id="wxStrip" style="display:none"></div>
+<div class="wx-banner" id="wxBanner"></div>
+<div class="main">
+
+  <!-- LEFT: Cards library -->
+  <div class="lib">
+    <div class="lib-head">
+      <span>Aktivitäten &amp; Restaurants</span>
+      <span id="libCount" style="color:#2d7a52;font-weight:700"></span>
+    </div>
+    <div class="lib-filter">
+      <button class="f-btn on" onclick="filterLib('all',this)">Alle</button>
+      <button class="f-btn" onclick="filterLib('sight',this)">🗺 Sights</button>
+      <button class="f-btn" onclick="filterLib('rest',this)">🍽 Restaurants</button>
+      <button class="f-btn" onclick="filterLib('veg',this)">🌿 Vegetarisch</button>
+      <button class="f-btn" onclick="filterLib('meat',this)">🥩 Fleisch</button>
+      <button class="f-btn" onclick="filterLib('easy',this)">✅ Einfach</button>
+    </div>
+    <div class="scroll-hint">
+      <span>💡 <strong>Alle</strong> = nach Lage gruppiert (Sights + Restaurants nah beieinander) · Halten (0,3 Sek.) = Drag · Wischen = Scrollen</span>
+    </div>
+    <div class="lib-scroll" id="libScroll"></div>
+  </div>
+
+  <!-- RIGHT: Day planner -->
+  <div class="planner">
+    <div class="planner-head">
+      <div class="planner-title" id="plannerTitle">Tagesplan</div>
+      <div class="planner-actions">
+        <button class="btn-sm" onclick="window.print()">🖨</button>
+        <button class="btn-sm btn-clear" onclick="clearPlan()">✕ Leeren</button>
+      </div>
+    </div>
+    <div class="planner-scroll" id="plannerScroll">
+      <div id="timeline"></div>
+    </div>
+    <div class="export-bar">
+      <span>Karte ablegen → ✕ zum Entfernen</span>
+      <button onclick="window.print()">Drucken</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const M=q=>`https://www.google.com/maps/search/${encodeURIComponent(q)}`;
+const G=q=>`https://www.google.com/search?q=${encodeURIComponent(q)}`;
+
+const stations=[
+// ═══ SALVADOR ═══
+{name:'Salvador da Bahia',sub:'27.–30. Juni · 3 Nächte · Hotel Rede Andrade Barra',
+ info:'⚠️ Kopfsteinpflaster im Pelourinho → festes Schuhwerk! · Mittagshitze bis 30 °C → Pause einplanen · Kleinbus vorbuchen · Zeitangaben großzügig kalkuliert mit Foto- und Ruhepausen',
+ days:[{l:'Sa 27.6.',t:'Ankunft & Ruhetag'},{l:'So 28.6.',t:'Pelourinho & Kultur'},{l:'Mo 29.6.',t:'Museen & Barra'},{l:'Di 30.6.',t:'Abreise → Brasília'}],
+ items:[
+  // ── Sehenswürdigkeiten Pelourinho / Centro Histórico ──
+  {id:'sv1',type:'sight',e:'🏛',n:'Pelourinho – UNESCO-Altstadt',area:'Centro Histórico',dur:'2–3 Std.',d:'Buntes Kolonial-Herzstück mit lebhaften Plätzen, Barockfassaden, Straßenmusik und Acarajé-Verkäuferinnen. Morgens am ruhigsten und kühlsten. Michael Jackson drehte hier "They Don\'t Care About Us".',t:['moderat','UNESCO','Foto-Highlight'],v:false,easy:false,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Pelourinho+Salvador+Bahia'},{n:'Info',u:'https://www.google.com/search?q=Pelourinho+Salvador+Sehenswürdigkeiten'}]},
+  {id:'sv2',type:'sight',e:'✨',n:'Igreja de São Francisco',area:'Centro Histórico',dur:'1–1,5 Std.',d:'Prächtigste Barockkirche Brasiliens – innen komplett vergoldet mit Schnitzereien und Azulejos. Barrierefrei & klimatisiert. Für Architekten: bemerkenswerte koloniale Dekortechnik aus dem 18. Jh.',t:['einfach','barrierefrei','Architektur-Highlight'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Igreja+de+S%C3%A3o+Francisco+Salvador+Bahia'},{n:'Info',u:'https://www.google.com/search?q=Igreja+São+Francisco+Salvador'}]},
+  {id:'sv2b',type:'sight',e:'⛪',n:'Largo Terreiro de Jesus',area:'Centro Histórico',dur:'45 Min.',d:'Zentraler Barockplatz im Pelourinho, umgeben von historischen Kirchenfassaden. Lebhafter Treffpunkt mit Straßenkünstlern und Acarajé-Verkäuferinnen. Idealer Start für den Rundgang.',t:['einfach','Platz','Foto-Highlight'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13672266745483239695'}]},
+  {id:'sv2c',type:'sight',e:'🏛',n:'Palácio Rio Branco – Museum',area:'Centro Histórico',dur:'1 Std.',d:'Ehemaliger Regierungspalast (1919) mit schöner Aussicht auf die Allerheiligenbucht. Kleines Museum zur Stadtgeschichte. Eintritt kostenlos. Di–Fr 10–17 Uhr. Toller Blickpunkt auf die Unterstadt.',t:['einfach','kostenlos','Architektur'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=8929895869617651310'}]},
+  {id:'sv3',type:'sight',e:'🛗',n:'Elevador Lacerda + Unterstadt',area:'Centro Histórico',dur:'1–1,5 Std.',d:'Historischer Art-Déco-Fahrstuhl (1873, modernisiert 1930) zwischen Ober- und Unterstadt – für Architekten ein Juwel. Panoramablick auf die Allerheiligenbucht. Daneben direkt der Mercado Modelo.',t:['einfach','Architektur','Ausblick'],v:false,easy:true,l:[{n:'Elevador',u:'https://maps.google.com/?q=Elevador+Lacerda+Salvador'},{n:'Mercado',u:'https://maps.google.com/?q=Mercado+Modelo+Salvador+Bahia'}]},
+  {id:'sv4',type:'sight',e:'🌅',n:'Farol da Barra – Leuchtturm',area:'Barra',dur:'1–1,5 Std.',d:'Ältester Leuchtturm Südamerikas (1839), fußläufig vom Hotel. Kleines Schifffahrtsmuseum innen. Perfekter Sonnenuntergang. Direkt am Praia do Porto da Barra – zum Abend einplanen.',t:['einfach','hotelnah','Sonnenuntergang'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Farol+da+Barra+Salvador'}]},
+  {id:'sv5',type:'sight',e:'💧',n:'Dique do Tororo – Stadtsee',area:'Barra / Tororo',dur:'1,5–2 Std.',d:'Ebener Rundweg mit imposanten Orixás-Götterstatuen im See (Skulpturen von Tatti Moreno, 1998). Kaum Touristen, wunderschöne Fotos. Ideal für alle Altersgruppen – abwechslungsreiche Stadtkunst im öffentlichen Raum.',t:['einfach','eben','Stadtkunst'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Dique+do+Tororo+Salvador'}]},
+  {id:'sv6',type:'sight',e:'🥁',n:'Capoeira-Show im Pelourinho',area:'Centro Histórico',dur:'1–1,5 Std.',d:'Abendliche Capoeira-Vorführungen auf den Plätzen – kostenlos und mitreißend. Besonders auf dem Largo do Pelourinho ab ca. 19 Uhr. Mischung aus Kampfkunst, Musik und Tanz.',t:['einfach','Abends','kostenlos'],v:false,easy:true,l:[{n:'Info',u:'https://www.google.com/search?q=Capoeira+Show+Pelourinho+Salvador+abends'}]},
+  {id:'sv6b',type:'sight',e:'⚓',n:'Fallen Cross – Praça da Sé Ausblick',area:'Centro Histórico',dur:'30–45 Min.',d:'Eindrucksvolles Kreuzmonument an der Praça da Sé mit grandiosem Panoramablick über die Allerheiligenbucht. Besonders schön zum Sonnenuntergang – nur 5 Min. vom Pelourinho.',t:['einfach','Ausblick','kostenlos'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=3517434219940750205'}]},
+  // ── Kunst & Architektur (speziell für Architekt + Kunstlehrerin) ──
+  {id:'sv_art1',type:'sight',e:'🎨',n:'MAM Bahia – Solar do Unhão',area:'Unterstadt (10 Min. Taxi)',dur:'2–3 Std.',d:'Museum für Moderne Kunst in einem sensationell restaurierten Kolonial-Lagerkomplex aus dem 17. Jh. direkt am Meer. UNESCO-würdige adaptive Wiederverwendung. Skulpturengarten, Kinosaal, wechselnde zeitgenössische Ausstellungen. Di–Fr 13–18h, Sa–So 10–18h.',t:['Kunst','Architektur','bayrierefrei'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=9010413396553960751'},{n:'Info',u:'https://www.google.com/search?q=MAM+Bahia+Museum+Moderne+Kunst+Salvador'}]},
+  {id:'sv_art2',type:'sight',e:'🖼',n:'Museu Afro-Brasileiro (MAFRO)',area:'Centro Histórico – Pelourinho',dur:'1,5–2 Std.',d:'Im selben Gebäude wie die Faculdade de Medicina – einem der schönsten Kolonialbauten Salvadors. Weltberühmte Holzpaneele des argentinisch-brasilianischen Künstlers Carybé: 27 monumentale Orixás. Für Kunstlehrerinnen ein Muss! Mo–Fr 9–17h.',t:['Kunst','UNESCO-Bau','Kulturhighlight'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13369706613060665956'},{n:'Info',u:'https://www.google.com/search?q=MAFRO+Museu+Afro+Brasileiro+Salvador'}]},
+  {id:'sv_art3',type:'sight',e:'🏛',n:'Bahia Museum of Art (MAB)',area:'Corredor da Vitória (15 Min. Taxi)',dur:'1,5–2 Std.',d:'Ältestes Kunstmuseum Bahias (1918) im neoklassischen Palast Solar Cerqueira Lima. Gemälde vom 17.–20. Jh., Skulpturen, Sakralkunst. Freier Eintritt. Wunderschöner Mirador mit Ausblick. Di–So 10–18h.',t:['Kunst','Architektur','kostenlos'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13000534813000278621'},{n:'Info',u:'https://www.google.com/search?q=Museu+Arte+Bahia+MAB+Salvador'}]},
+  {id:'sv_art4',type:'sight',e:'🌟',n:'Palacete das Artes – MAC Salvador',area:'Graça (10 Min. Taxi)',dur:'1,5–2 Std.',d:'Museum für zeitgenössische Kunst in einem wunderschönen Kolonialpalast mit moderner Erweiterung. Kostenlos, oft mit hochkarätigen Wechselausstellungen. Schöner Garten und Café. Di–So 10–20h. Für Kunstlehrerinnen ideal.',t:['Zeitgenössische Kunst','kostenlos','Garten'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=12700523133574001665'},{n:'Info',u:'https://www.google.com/search?q=Palacete+das+Artes+Rodin+Bahia+Salvador'}]},
+  // ── Restaurants Pelourinho ──
+  {id:'sr1',type:'rest',e:'🍽',n:'Escola Senac – Buffet',area:'Pelourinho',d:'Buffet der Gastronomie-Hochschule direkt im Pelourinho. Vegetarische Gerichte ausgeschildert. Mittags 11:30–15:30, täglich.',t:['Buffet','🌿 Vegetarisch','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,7 · 1.924',h:'11:30–15:30 tägl.',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=8947783514709527815'},{n:'Menü',u:'https://www.ba.senac.br/cardapiorestaurantepelourinho'}]},
+  {id:'sr2',type:'rest',e:'🥩',n:'Cuco Bistrô',area:'Pelourinho',d:'Steak, Pasta, Moqueca in klimatisiertem Bistro direkt am Largo do Cruzeiro. Fleischalternative für Fischmuffel. Mo–Sa 12–22h.',t:['🥩 Fleisch','🌿 Vegetarisch','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,7 · 2.861',h:'Mo–Sa 12–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=10323986743869874611'},{n:'Web',u:'http://cucobistro.com.br'}]},
+  {id:'sr2b',type:'rest',e:'🦐',n:'Bar Axego',area:'Pelourinho',d:'Familienbetrieb direkt im Pelourinho. Beste Moqueca de Peixe der Altstadt laut vielen Reisenden. Mit Live-Musik. Di–So 11:30–17h.',t:['Moqueca','🥩 Fleisch','günstig','🎵 Live'],v:false,easy:true,rating:'⭐ 4,6 · 810',h:'Di–So 11:30–17h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=8819673017782093496'}]},
+  {id:'sr2c',type:'rest',e:'🌿',n:'Restaurante Uauá',area:'Pelourinho',d:'Sehr beliebtes authentisches Bahia-Restaurant. Garnelen-Moqueca, hausgemachte Säfte. Täglich 11:30–16h (So bis 18h).',t:['🌿 Vegetarisch','🥩 Fleisch','günstig'],v:true,easy:true,rating:'⭐ 4,6 · 366',h:'tägl. 11:30–16h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=4986695684003225665'}]},
+  {id:'sr3',type:'rest',e:'🎭',n:'Coliseu – Kulturshow & Essen',area:'Pelourinho',d:'Bahianische Küche + Capoeira-Folkloreshow! Vegetarische Moqueca. Mo–Sa 11–21h. Vorab reservieren empfohlen.',t:['🎭 Kulturshow','🌿 Veg. Moqueca','Abends'],v:true,easy:true,rating:'⭐ 4,6',h:'Mo–Sa 11–21h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=17715010761058378881'}]},
+  {id:'sr3b',type:'rest',e:'🌴',n:'Pelô Bistrô (Hotelgarten)',area:'Pelourinho',d:'Bezaubernder Tropengarten-Bistrô im Hotel Casa do Amarelindo. Bahia-Spezialitäten, kreative Küche. Do–So Mittag & Abend.',t:['🌿 Vegetarisch','Meeresfrüchte','Atmosphäre'],v:true,easy:true,rating:'⭐ 4,5 · 493',h:'Do–So Mittag & Abend',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=4918607040637554247'}]},
+  // ── Restaurants Barra (hotelnah) ──
+  {id:'sr4',type:'rest',e:'🍕',n:'Oliva Gourmet (Barra)',area:'Barra – hotelnah',d:'All-you-can-eat Pizza & Pasta, fußläufig vom Hotel Rede Andrade. Günstig & unkompliziert. Täglich ab 11:30h.',t:['Pizza & Pasta','🌿 Vegetarisch','günstig','🏨 hotelnah'],v:true,easy:true,rating:'⭐ 4,5 · 3.911',h:'tägl. ab 11:30h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=5426000996749316829'}]},
+  {id:'sr4b',type:'rest',e:'🍹',n:'Recôncavo Culinária (Barra)',area:'Barra – hotelnah',d:'Hochgelobtes Bahia-Restaurant in Barra. Garnelen, Moqueca, Fleisch. Hervorragende Speisekarte. Di–So 11–22h.',t:['🌿 Vegetarisch','🥩 Fleisch','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,8 · 706',h:'Di–So 11–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=5449791278671700736'}]},
+  {id:'sr4c',type:'rest',e:'🌊',n:'Kitanda Gastrobar Farol da Barra',area:'Barra – Leuchtturm',d:'Veganes Menü & viele vegetarische Optionen. Meerblick, Terrasse. Banana-Moqueca ein Hit! Live-Musik fr–sa. Tägl. 12–22h.',t:['🌿 Vegane Moqueca','🌊 Meerblick','🎵 Live'],v:true,easy:true,rating:'⭐ 4,6 · 699',h:'tägl. 12–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=868073855716793348'}]},
+  {id:'sr4d',type:'rest',e:'🌊',n:'Barravento Restaurant (Barra)',area:'Barra – Leuchtturm',d:'Beliebtes Strandrestaurant mit Meerblick direkt am Barra-Strand. Seafood, Moqueca, Fleisch-Stroganoff. Mi–So ab 12h.',t:['🥩 Fleisch','Meeresfrüchte','🌊 Meerblick'],v:false,easy:true,rating:'⭐ 4,5 · 7.026',h:'Mi–So ab 12h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13474337756244115859'}]},
+]},
+
+// ═══ BRASÍLIA ═══
+{name:'Brasília',sub:'30. Juni – 3. Juli · 3 Nächte · Brasília Park Hotel',
+ info:'⚠️ Höhe 1.200 m → Sonne brennt stark, LSF 50+ nötig! · Sehenswürdigkeiten weit auseinander → Kleinbus buchen · Für den Architekten: Brasília ist DAS Mekka des Modernismus – Niemeyer + Lucio Costa + Burle Marx · Trockenzeit: kein Regen',
+ days:[{l:'Di 30.6.',t:'Ankunft & Catedral'},{l:'Mi 1.7.',t:'Stadtführung Niemeyer'},{l:'Do 2.7.',t:'Museen & Lago'},{l:'Fr 3.7.',t:'Abreise → Manaus'}],
+ items:[
+  // ── Niemeyer-Architektur-Pflichtprogramm ──
+  {id:'bs1',type:'sight',e:'🏛',n:'Esplanada dos Ministérios',area:'Plano Piloto – Monumental Axis',dur:'2–3 Std.',d:'Das Herzstück des UNESCO-Welterbes: Nationalkongress (1960), Palácio do Planalto, Oberster Gerichtshof – alles von Niemeyer. Flache Wege auf der Esplanada. Für Architekten das bedeutendste Ensemble des Modernismus weltweit.',t:['einfach','UNESCO','Architektur-Pflicht'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=7584099726019497909'}]},
+  {id:'bs1b',type:'sight',e:'⚖️',n:'Praça dos Três Poderes',area:'Plano Piloto',dur:'1,5 Std.',d:'Praça am Ende der Esplanada mit Nationalkongress, Palácio do Planalto und Oberem Gerichtshof. Hier versteht man Niemeyers politische Architektur-Vision. Kostenlos, immer geöffnet.',t:['einfach','Architektur','Pflichtbesuch'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=16065093285153505720'}]},
+  {id:'bs2',type:'sight',e:'⛪',n:'Catedral Metropolitana',area:'Plano Piloto',dur:'1–1,5 Std.',d:'Niemeyers Kathedrale (1970): Von außen 16 hyperbolische Betonstützen – innen Lichtspektakel durch Glasmosaike von Marianne Peretti. UNESCO-Erbe. Rampe barrierefrei. Eintritt kostenlos. Einer der kühnsten Kirchenbauten des 20. Jh.',t:['einfach','Architektur','barrierefrei'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Catedral+Metropolitana+Brasilia'}]},
+  {id:'bs_arch1',type:'sight',e:'🏅',n:'Palácio Itamaraty – Außenministerium',area:'Plano Piloto',dur:'1,5–2 Std.',d:'Niemeyers elegantestes Werk (1970): schwebende Bögen über einem Wasserbecken, Innenräume mit Kunstwerken nur brasilianischer Künstler. Führungen Di–Sa kostenlos! Für Architekten ein unverzichtbares Erlebnis – das perfekte Zusammenspiel von Raum, Wasser und Kunst.',t:['Architektur-Meisterwerk','kostenlos','Führung'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=12281673710340505397'},{n:'Info',u:'https://www.google.com/search?q=Palácio+Itamaraty+Brasilia+Besichtigung'}]},
+  {id:'bs_arch2',type:'sight',e:'🏺',n:'Memorial JK – Niemeyer-Mausoleum',area:'Monumental Axis',dur:'1,5–2 Std.',d:'Niemeyers zurückhaltendstes Meisterwerk (1981): unterirdischer Zugang, Kuppel, Säule zum Himmel. Kuratiert von JKs Frau Sara. Museum über Brasílias Gründung + Präsident Kubitschek. Di–So, Eintritt 10 R$.',t:['Architektur','Geschichte','Museum'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=15434862038143048965'},{n:'Info',u:'https://www.google.com/search?q=Memorial+JK+Brasilia'}]},
+  {id:'bs3',type:'sight',e:'🗼',n:'Torre de TV – Panoramablick',area:'Plano Piloto',dur:'1–1,5 Std.',d:'Aufzug auf 75 m – bester Blick über den Lucio Costa Masterplan: die Flugzeugform der Stadt wird hier von oben vollständig sichtbar. Eintritt kostenlos. Samstags Handwerksmarkt darunter.',t:['einfach','Aufzug','kostenlos'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Torre+de+TV+Brasilia'}]},
+  {id:'bs4',type:'sight',e:'🌊',n:'Lago Paranoá & Pontão',area:'Lago Sul',dur:'2–3 Std.',d:'Spaziergang am Künstlichen See mit JK-Brücke (architektonisch bemerkenswert). Pontão Lago Sul: Restaurants, Bootsfahrten, Abendstimmung. Burle-Marx-Gartengestaltung entlang des Ufers.',t:['einfach','Gartenarchitektur','Abend'],v:false,easy:true,l:[{n:'Lago Paranoá',u:'https://maps.google.com/?q=Lago+Paranoá+Brasilia'},{n:'Pontão',u:'https://maps.google.com/?cid=17811001505879736097'}]},
+  {id:'bs5',type:'sight',e:'🎨',n:'Museu Nacional da República',area:'Plano Piloto',dur:'1,5–2 Std.',d:'Niemeyers perfekte Halbkuppel (2006): Das Nationalmuseum liegt auf der Esplanada, klimatisiert – ideal mittags. Wechselnde Kunstausstellungen, kostenlos. Architektonisch eng verwandt mit dem Museu do Niemeyer in Curitiba.',t:['Kunst','Architektur','kostenlos'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=3297484879601266984'}]},
+  {id:'bs5b',type:'sight',e:'💎',n:'Praça dos Cristais',area:'Plano Piloto',dur:'45 Min.',d:'Verborgenes Juwel – ruhiger Platz mit beeindruckenden Regierungsgebäuden. Ideal für Fotos und eine stille Pause. Kaum Touristen, von Einheimischen geliebt. Burle-Marx-Bepflanzung.',t:['einfach','ruhig','Gartenkunst'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=4558018706527218329'}]},
+  {id:'bs6',type:'sight',e:'🚌',n:'Geführte Architekturtour im Kleinbus',area:'Plano Piloto',dur:'4–5 Std.',d:'Privatführung mit Architekturguide im Kleinbus – alle Niemeyer-Highlights bequem in einem Zug. Empfehlung: Artchitectours (EN/DE verfügbar) für eine professionelle Einführung in den brasilianischen Modernismus.',t:['Architektur-Tour','sitzend','Gruppe'],v:false,easy:true,l:[{n:'Artchitectours',u:'https://www.artchitectours.com/tour/monumental-axis/'},{n:'Info',u:'https://www.google.com/search?q=Brasilia+architecture+tour+private+guide+english'}]},
+  // ── Restaurants Asa Sul / Plano Piloto ──
+  {id:'br1',type:'rest',e:'🥩',n:'Steak Bull Churrascaria',area:'Asa Sul',d:'Brasilianisches Rodízio: Alle Fleischsorten direkt am Spieß an den Tisch. Salatbuffet für Vegetarier. Mo–Sa 11:30–23h.',t:['🥩 Rodízio','Salatbuffet','Mittelklasse'],v:false,easy:true,rating:'⭐ 4,6 · 8.904',h:'Mo–Sa 11:30–23h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=16169051595331419860'}]},
+  {id:'br1b',type:'rest',e:'🥩',n:'Caminito Parrilla',area:'Asa Sul',d:'Argentinisches Steakhouse – beste Fleischqualität in Brasília laut vielen Gästen. Freundliche Atmosphäre. Täglich 11–24h.',t:['🥩 Argentinisches Steak','Mittelklasse'],v:false,easy:true,rating:'⭐ 4,9 · 9.370',h:'tägl. 11–24h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=3114640614897344899'}]},
+  {id:'br2',type:'rest',e:'🍛',n:'Mangai – Kilo-Buffet',area:'Lago (Seeblick)',d:'Riesiges nordostbrasilianisches Kilo-Buffet am Lago Paranoá. Vegetarisch & Fleisch. Mo–Sa 11:30–23h.',t:['Buffet','🌿 Vegetarisch','🌊 Seeblick'],v:true,easy:true,rating:'⭐ 4,6 · 24.665',h:'Mo–Sa 11:30–23h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=7346338847189152594'},{n:'Web',u:'http://mangai.com.br'}]},
+  {id:'br2b',type:'rest',e:'🌿',n:'The Plant – Asa Sul',area:'Asa Sul',d:'Lokal-nachhaltig, viele vegetarische & vegane Optionen, Hummus ein Hit. Fleischgerichte auch vorhanden. Täglich 11–22:30h.',t:['🌿 Vegetarisch','lokal & nachhaltig','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,5 · 1.809',h:'tägl. 11–22:30h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=6270820781875069518'}]},
+  {id:'br3',type:'rest',e:'🍛',n:'Indian Lounge',area:'Asa Sul',d:'Indische Küche, viele vegetarische Gerichte (Paneer, Dal, Pakora). Günstig, freundlicher Gastgeber. Täglich 11–22h.',t:['🌿 Vegetarisch','Indisch','günstig'],v:true,easy:true,rating:'⭐ 4,8',h:'tägl. 11–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=17864214284310764437'}]},
+  {id:'br3b',type:'rest',e:'🍝',n:'Solo Ristorante',area:'Asa Sul',d:'Feines Italienisches Restaurant in Asa Sul. Gnocchi ai Funghi, Parmigiana, kreative Pasta. Mittag & Abend, Sonntag bis 16h.',t:['Italienisch','🌿 Pasta veg.','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,7 · 2.318',h:'tägl. Mittag & Abend',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=7580027697671073683'}]},
+  {id:'br3c',type:'rest',e:'🌟',n:'Restaurante Universal',area:'Asa Sul',d:'Eines der besten Restaurants in Brasília. Vegetarische Optionen, hervorragender Service. Executivo-Lunchmenü sehr erschwinglich. Di–So Mittag & Abend.',t:['🌿 Vegetarisch','🥩 Fleisch','Mittag & Abend'],v:true,easy:true,rating:'⭐ 4,7 · 4.835',h:'Di–So Mittag & Abend',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=15474879975889404330'}]},
+]},
+
+// ═══ MANAUS ═══
+{name:'Manaus / Amazonas',sub:'3.–8. Juli · 5 Nächte · Tropical Executive Hotel',
+ info:'⚠️ Mückenschutz DEET ≥30 % permanent tragen! · Hitze 30–35 °C → viele Pausen! · Malaria-Prophylaxe mit Arzt besprechen · Museu do Índio: Eintritt über 60 J. kostenlos! · Zeitangaben inkl. Foto- & Ruhepausen',
+ days:[{l:'Fr 3.7.',t:'Ankunft & Teatro'},{l:'Sa 4.7.',t:'Bootsausflug Delfine'},{l:'So 5.7.',t:'Museen & Opernhaus'},{l:'Mo 6.7.',t:'MUSA Naturreservat'},{l:'Di 7.7.',t:'Markttag & Koffer'},{l:'Mi 8.7.',t:'Abreise → Praia do Forte'}],
+ items:[
+  // ── Architektur & Stadtkultur Centro ──
+  {id:'mn2',type:'sight',e:'🎭',n:'Teatro Amazonas – Opernhaus',area:'Centro',dur:'1,5–2 Std.',d:'Weltberühmtes Opernhaus (1896) aus der Gummiboom-Ära – Mosaikdom in Brasiliens Farben, venezianisches Glas, europäische Materialien. Innenbesichtigung tägl. 9–17h. Abendvorstellungen buchbar. Für Architekten: Musterbau des eklektischen Historismus in der Tropen.',t:['einfach','Architektur-Highlight','Geschichte'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Teatro+Amazonas+Manaus'},{n:'Tickets',u:'https://www.google.com/search?q=Teatro+Amazonas+Manaus+Tickets+Vorstellung'}]},
+  {id:'mn2b',type:'sight',e:'🏛',n:'Palácio Rio Negro',area:'Centro',dur:'1–1,5 Std.',d:'Letztes vollständig erhaltenes Gebäude der Gummiboom-Ära (1903, erbaut von dt. Kaufmann Scholz). Kostenloses Museum, historische Zimmer, schöne Balkone mit Flussblick. Mo, Mi–Sa 9–15h.',t:['einfach','kostenlos','Geschichte'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=12742879804022448009'}]},
+  {id:'mn2c',type:'sight',e:'🌅',n:'Mirante Lúcia Almeida',area:'Centro',dur:'45 Min.–1 Std.',d:'Wunderschöner Aussichtspunkt über den Amazonas – spektakulärer Sonnenuntergang. 15 Min. Fußweg vom Opernhaus. Kostenlos. Tägl. 10–23h (Fr/Sa bis Mitternacht). Mit kleiner Gastronomie.',t:['einfach','kostenlos','Sonnenuntergang'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=10611703862571380856'}]},
+  {id:'mn2d',type:'sight',e:'🕰',n:'Relógio Municipal – Stadtturm',area:'Centro',dur:'30 Min.',d:'Historisches Wahrzeichen (1927) im Zentrum – kombiniert einen englischen Turm mit dem Amazonas-Flair der Gummiboom-Ära. Start für einen Stadtspaziergang. Kostenfrei, immer zugänglich.',t:['einfach','kostenlos','Foto'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=14024613895285958872'}]},
+  {id:'mn5',type:'sight',e:'🐟',n:'Mercado Municipal Adolpho Lisboa',area:'Centro',dur:'1–1,5 Std.',d:'Historische Markthalle (1882): Eisenkonstruktion inspiriert von Gustave Eiffel – importiertes Gusseisen aus Liverpool, Uhr aus Deutschland. Exotische Amazonasfische, Heilpflanzen, Kunsthandwerk. Mo–Sa 7–15:30h.',t:['einfach','Architektur','Markt'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Mercado+Municipal+Adolpho+Lisboa+Manaus'}]},
+  // ── Natur-Ausflüge ──
+  {id:'mn1',type:'sight',e:'🌊',n:'Begegnung der Gewässer',area:'Bootsausflug',dur:'3–4 Std.',d:'Schwarzer Rio Negro und sandbrauner Solimões fließen nebeneinander ohne sich zu mischen (verschiedene Temperatur, Dichte, Fließgeschwindigkeit). Ca. 30 Min. Bootsfahrt ab Zentrum. Unvergessliches Naturphänomen.',t:['einfach','Bootsausflug','Naturspektakel'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Encontro+das+Águas+Manaus'},{n:'Info',u:'https://www.google.com/search?q=Begegnung+der+Gewässer+Manaus'}]},
+  {id:'mn3',type:'sight',e:'🐬',n:'Rosa Flussdelfine – Bootstour',area:'Bootsausflug',dur:'4–5 Std.',d:'Geführte Fahrt Rio Negro: rosa Delfine (Botos), Riesenottern, Victoria-Regia-Seerosen (bis 3 m Durchmesser!). Komplett sitzend im Boot. Am besten früh morgens buchen.',t:['einfach','sitzend','Natur'],v:false,easy:true,l:[{n:'Info & Buchung',u:'https://www.google.com/search?q=Rosa+Flussdelfine+Botos+Manaus+Bootstour+buchen'}]},
+  {id:'mn4',type:'sight',e:'🌿',n:'MUSA – Museum des Amazonas',area:'Außerhalb (Taxi 20 Min.)',dur:'3–4 Std.',d:'100 ha Naturreservat des INPA-Forschungsinstituts. 42 m Aussichtsturm mit Aufzug! Erschlossene Wege durch echten Sekundärwald. Ausstellungen über Amazoniasbiodiversität. Di–So 9–16h.',t:['einfach','Aufzug','Natur'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=MUSA+Museu+da+Amazônia+Manaus'},{n:'Info',u:'https://www.google.com/search?q=MUSA+Manaus+Ausflug'}]},
+  {id:'mn6',type:'sight',e:'🏊',n:'Pool & Ponta Negra Strand',area:'Ponta Negra (Hotel)',dur:'2–3 Std.',d:'Hotel-Pool mit Rio-Negro-Blick (im eigenen Hotel!). Im Juli oft natürlicher Flussstrand in Ponta Negra zugänglich. Ideal für Nachmittagspausen nach anstrengenden Morgen.',t:['einfach','Entspannung','Hotel'],v:false,easy:true,l:[{n:'Ponta Negra',u:'https://maps.google.com/?q=Ponta+Negra+Beach+Manaus'}]},
+  // ── Restaurants Centro (fußläufig zum Opernhaus) ──
+  {id:'mr1',type:'rest',e:'🐟',n:'Tambaqui de Banda',area:'Centro – Opernhaus',d:'Direkt neben dem Opernhaus, günstig, englische Karte, Livemusik. Tambaqui-Fisch + Fleischgerichte. Täglich 11–23h.',t:['🥩 Fleisch','Lokal','günstig','🎵 Live'],v:false,easy:true,rating:'⭐ 4,6 · 6.154',h:'tägl. 11–23h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=12221872360789720729'}]},
+  {id:'mr1b',type:'rest',e:'☕',n:'Roseiral Restaurante & Café',area:'Centro – Opernhaus',d:'Direkt am Opernhaus-Platz. Klimatisiert, englisches Menü, Bücherladen unten. Kaffee & Kuchen, leichte Küche. Tägl. 10–22h.',t:['🌿 Vegetarisch','Café','günstig'],v:true,easy:true,rating:'⭐ 4,7 · 899',h:'tägl. 10–22h (So ab 8h)',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=7549040834491600651'}]},
+  {id:'mr1c',type:'rest',e:'🦈',n:'Taberna do Chef Procópio (Mercado)',area:'Centro – Markt',d:'Im historischen Mercado Adolpho Lisboa. Amazonia-Autorenküche, frisch zubereiteter Fisch. Mo–Sa 7–15:30h.',t:['Regional','Amazonia-Küche','Mittelklasse'],v:false,easy:true,rating:'⭐ 4,4 · 6.063',h:'Mo–Sa 7–15:30h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=12823282267553808522'}]},
+  {id:'mr2',type:'rest',e:'🍽',n:'Restaurante Caxiri',area:'Centro',d:'Gehobene regionale Küche, vegetarische Optionen, Ente auf lokale Art, gegrillte Piranha. Di–Sa Mittag & Abend.',t:['🌿 Vegetarisch','Regional','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,5 · 1.991',h:'Di–Sa Mittag & Abend',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=16546789136106957467'}]},
+  // ── Restaurants Adrianópolis ──
+  {id:'mr3',type:'rest',e:'🌿',n:'Moquém do Banzeiro',area:'Adrianópolis',d:'Allergenanzeige & englische Übersetzung auf der Karte! Pilzsuppe, Tambaqui-Ribs, Fleisch & veg. Optionen. Tägl. ab 11:30h.',t:['🌿 Vegetarisch','Allergenanzeige','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,6',h:'tägl. ab 11:30h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=5088471926420179307'}]},
+  {id:'mr3b',type:'rest',e:'🥩',n:'La Vaca Negra – Argentinisches Steak',area:'Adrianópolis',d:'Bestes Steak in Manaus laut vielen Reisenden. Argentinisches Steakhouse. Tägl. 11:30–23h.',t:['🥩 Argentinisches Steak','Fleisch','Mittelklasse'],v:false,easy:true,rating:'⭐ 4,9 · 2.747',h:'tägl. 11:30–23h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13003044543073756010'}]},
+  {id:'mr3c',type:'rest',e:'🍣',n:'Sushi Ponta Negra',area:'Adrianópolis',d:'Bestes Sushi in Manaus. Großes Angebot, günstig. Tägl. ab 18h.',t:['Sushi','Meeresfrüchte','günstig'],v:false,easy:true,rating:'⭐ 4,8 · 4.650',h:'tägl. ab 18h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=10393785213063505329'}]},
+  {id:'mr4',type:'rest',e:'🌟',n:'Restaurante Banzeiro',area:'Adrianópolis',d:'Locale Zutaten modern interpretiert. Shrimp Bao, Acai-Desserts. Tägl. 11:30–23h (So bis 22h).',t:['🌿 Vegetarisch','Regional','Mittelklasse'],v:true,easy:true,rating:'⭐ 4,6 · 3.813',h:'tägl. 11:30–23h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=5025451893649305237'}]},
+]},
+
+// ═══ PRAIA DO FORTE ═══
+{name:'Praia do Forte',sub:'8.–17. Juli · 9 Nächte · Hotel Via dos Corais',
+ info:'🐋 Juli = Trockenzeit & Walbeobachtungssaison! · Waltouren vorab buchen! · LSF 50+ täglich · Alles im Ort fußläufig! · Zeitangaben inkl. Strandpausen & Fotos',
+ days:[{l:'Mi 8.7.',t:'Ankunft & Leuchtturm'},{l:'Do 9.7.',t:'TAMAR & Strand'},{l:'Fr 10.7.',t:'Walbeobachtung 🐋'},{l:'Sa 11.7.',t:'Castelo & Strand'},{l:'So 12.7.',t:'Sapiranga Bootsfahrt'},{l:'Mo 13.7.',t:'Strandtag'},{l:'Di 14.7.',t:'Strandtag'},{l:'Mi 15.7.',t:'Strandtag'},{l:'Do 16.7.',t:'Abschiedsabend'},{l:'Fr 17.7.',t:'Heimreise ✈'}],
+ items:[
+  // ── Sehenswürdigkeiten ──
+  {id:'pf1',type:'sight',e:'🐢',n:'Projeto TAMAR – Schildkröten',area:'Leuchtturm-Viertel',dur:'2–3 Std.',d:'Brasiliens bekanntestes Meeresschildkröten-Schutzprojekt (1980). Aquarien mit Riesenschildkröten bis 1,5 m, Haien & Rochen. Fütterung beobachten. Barrierefrei. Tägl. 11–17h.',t:['einfach','barrierefrei','Natur'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Projeto+Tamar+Praia+do+Forte'},{n:'Info',u:'https://www.google.com/search?q=Projeto+TAMAR+Praia+do+Forte'}]},
+  {id:'pf1b',type:'sight',e:'🌊',n:'Farol (Leuchtturm) & Korallenriff',area:'Leuchtturm-Viertel',dur:'1–1,5 Std.',d:'Der weiße Leuchtturm am Korallenriff ist das Wahrzeichen von Praia do Forte. Beste Schnorchel-Stelle direkt davor. Kostenlos anzuschauen. Für Kunstlehrerinnen: wunderbare Fotomotive bei Sonnenuntergang.',t:['einfach','kostenlos','Schnorcheln'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=8572655516960714648'}]},
+  {id:'pf2',type:'sight',e:'🐋',n:'Walbeobachtungs-Tour (Juli!)',area:'Bootsanleger',dur:'7–8 Std. (Ganztag)',d:'Buckelwale vor Bahias Küste! Ganztages-Schoner. Juli–September. Sitzend & komfortabel. Früh aufstehen lohnt sich – beste Sichtverhältnisse morgens. Unbedingt vorab buchen – begrenzte Plätze!',t:['einfach','sitzend','vorbuchen!'],v:false,easy:true,l:[{n:'Info & Buchung',u:'https://www.google.com/search?q=Walbeobachtung+Praia+do+Forte+Schoner+Tour+buchen'}]},
+  {id:'pf3',type:'sight',e:'🏖',n:'Traumstrand & Korallenriff',area:'Strand',dur:'2–4 Std. (nach Belieben)',d:'14 km weißer Palmenstrand mit natürlichem Korallenriff. Schnorcheln, Baden, Liegestühle & Strandkioske. Die beste Erholung für die ganze Gruppe. Täglich einplanen!',t:['einfach','täglich','Entspannung'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?q=Praia+do+Forte+strand+Bahia'}]},
+  {id:'pf3b',type:'sight',e:'🐠',n:'Praia do Lord – Schnorcheln',area:'Strand (nördl., 15 Min. Fußweg)',dur:'2–3 Std.',d:'Ruhigerer Strandabschnitt nördlich des Ortes. Ideal zum Schnorcheln mit Brille – sehr klares Wasser, Fische und Meereskreaturen direkt am Ufer. Weniger Betrieb als Hauptstrand.',t:['einfach','Schnorcheln','ruhig'],v:false,easy:true,l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13576421060090183245'}]},
+  {id:'pf4',type:'sight',e:'🏰',n:"Castelo Garcia D'Ávila",area:'5 km (Taxi 10 Min.)',dur:'2–2,5 Std.',d:'Ruinen der ältesten portugiesischen Festung Brasiliens (16. Jh.) – beeindruckende Überreste einer weitläufigen Anlage inmitten der Kokospalmenlandschaft. Per Taxi in 10 Min. Schöne Aussicht, ebenes Gelände.',t:['moderat','Halbtag','Geschichte'],v:false,easy:false,l:[{n:'Google Maps',u:"https://maps.google.com/?q=Castelo+Garcia+D'Avila+Praia+do+Forte"}]},
+  {id:'pf5',type:'sight',e:'🚣',n:'Reserva de Sapiranga – Bootsfahrt',area:'Naturschutzgebiet',dur:'3–4 Std.',d:'Motorboot durch den artenreichen Küstenwald (Restinga) – Vögel, Mangroven, kristallklare Lagunen, absolute Stille. Keine körperliche Anstrengung. Buchung vor Ort oder beim Hotel.',t:['einfach','Motorboot','Natur'],v:false,easy:true,l:[{n:'Info',u:'https://www.google.com/search?q=Reserva+de+Sapiranga+Praia+do+Forte+Bootsfahrt'}]},
+  // ── Restaurants (alle fußläufig im Ort!) ──
+  {id:'pr1',type:'rest',e:'🌟',n:'Bela Nordestina',area:'Ortsplatz',d:'Das Toprestaurant von Praia do Forte! Veg. Moqueca, Carne de Sol, Fleisch & Fisch. Riesige Portionen. Reservierung empfohlen! Mi geschlossen.',t:['🌿 Veg. Moqueca','🥩 Fleisch','günstig','⭐ Bester im Ort'],v:true,easy:true,rating:'⭐ 4,8 · 1.197',h:'Mo–Di, Do–So 11:30–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=1791539740164350643'},{n:'Web',u:'https://belanordestina.com.br'}]},
+  {id:'pr2',type:'rest',e:'🌿',n:"Xica's Bistrô",area:'Ortskern',d:'Vegane Moqueca (Broccoli, Plantain, Karotte). Carne de Sol für Fleischesser. Klein & gemütlich, englisches Menü. Mo geschlossen.',t:['🌿 Vegane Moqueca','🥩 Carne de Sol','günstig'],v:true,easy:true,rating:'⭐ 4,7 · 589',h:'Di–So 12:30–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=10039561894473589391'}]},
+  {id:'pr3',type:'rest',e:'🌅',n:'Farol Restaurante & Bar',area:'Leuchtturm',d:'Direkt am Leuchtturm mit Meerblick. Vegetarische Optionen. Livemusik Do–Sa. Perfekt für Sundowner & leichten Abend.',t:['🌿 Vegetarisch','🌊 Meerblick','🎵 Livemusik'],v:true,easy:true,rating:'⭐ 4,3 · 201',h:'Di–Mi 11–18h · Do–Sa 11–22h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=2924424624267471759'}]},
+  {id:'pr4',type:'rest',e:'🍽',n:'Restaurante Donana',area:'Ortsmitte',d:'Geräumig für große Gruppen – ideal für 7 Personen! Garnelen-Risotto, Moqueca & Fleisch. Täglich 11:30–22h (So bis 17h).',t:['🥩 Fleisch & Garnelen','👥 Gruppen','Mittelklasse'],v:false,easy:true,rating:'⭐ 4,5 · 2.116',h:'tägl. 11:30–22h (So –17h)',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=11003213985048178237'}]},
+  {id:'pr5',type:'rest',e:'🫓',n:'Tapiocaria Fundo de Quintal',area:'Ortskern',d:'Verstecktes Juwel mit 5,0 Sternen! Hausgemachte Tapiocas in allen Variationen (vegan, Fleisch, Käse). Lokaler Farmkaffee. Frühstück & Abend.',t:['🌿 Vegan','🥩 Fleisch','günstig','Geheimtipp ⭐'],v:true,easy:true,rating:'⭐ 5,0 · 192',h:'Zeiten variieren',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=8741424617736503048'}]},
+  {id:'pr6',type:'rest',e:'🍕',n:'O Sertão Vai Virar Mar',area:'Ortskern',d:'Rustikale nordostbrasilianische Küche & holzofengebackene Pizzas. Maria-Bonita-Pizza (Carne de Sol, Catupiry, Plantain) ein Muss! Tägl. ab 17h (Fr–So ab 12h).',t:['🥩 Carne de Sol','Pizza','günstig'],v:false,easy:true,rating:'⭐ 4,3 · 225',h:'Mo–Do ab 17h · Fr–So ab 12h',l:[{n:'Google Maps',u:'https://maps.google.com/?cid=13528949823218233278'}]},
+]},
+
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let curSt=0,curDay=0,curFilter='all';
+let plans=stations.map(s=>s.days.map(()=>new Array(14).fill(null)));
+const SLOTS=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00'];
+
+// ─────────────────────────────────────────────
+// DRAG STATE
+// Long-press threshold: 280ms before drag activates
+// Below threshold → finger is scrolling, not dragging
+// ─────────────────────────────────────────────
+const LONG_PRESS_MS = 280;
+
+let drag={
+  active:false, id:null, fromSlot:null,
+  ghost:null, sourceEl:null,
+  offsetX:0, offsetY:0,
+  pressTimer:null, didMove:false,
+  startX:0, startY:0,
+};
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function render(){renderDayBar();renderStationInfo();renderLib();renderPlanner();}
+
+function renderDayBar(){
+  document.getElementById('dayBar').innerHTML=stations[curSt].days.map((d,i)=>
+    `<button class="d-tab${i===curDay?' active':''}" onclick="setDay(${i})">${d.l}<br><span style="font-size:.6rem;opacity:.75">${d.t}</span></button>`
+  ).join('');
+}
+function renderStationInfo(){
+  document.getElementById('stationInfo').textContent=stations[curSt].info;
+}
+
+function getItems(){
+  return stations[curSt].items.filter(x=>{
+    if(curFilter==='all') return true;
+    if(curFilter==='sight') return x.type==='sight';
+    if(curFilter==='rest') return x.type==='rest';
+    if(curFilter==='veg') return x.v;
+    if(curFilter==='meat') return x.t.some(t=>t.includes('Fleisch')||t.includes('Steak')||t.includes('Rodízio')||t.includes('🥩')||t.includes('Sol'));
+    if(curFilter==='easy') return x.easy;
+    return true;
+  });
+}
+
+function renderLib(){
+  const items=getItems();
+  document.getElementById('libCount').textContent=items.length+' Einträge';
+  const scr=document.getElementById('libScroll');
+
+  // Group by area, then type within area
+  const areaMap=new Map();
+  items.forEach(x=>{
+    const area=x.area||'Sonstige';
+    if(!areaMap.has(area)) areaMap.set(area,[]);
+    areaMap.get(area).push(x);
+  });
+
+  // If filter shows only one type, just use flat grid; otherwise group by area
+  const showFlat = (curFilter==='sight'||curFilter==='rest'||curFilter==='veg'||curFilter==='meat'||curFilter==='easy');
+  let html='';
+  if(showFlat){
+    const sights=items.filter(x=>x.type==='sight');
+    const rests=items.filter(x=>x.type==='rest');
+    html=(sights.length?`<div class="lib-section-title">🗺 Sehenswürdigkeiten & Aktivitäten</div><div class="card-grid">${sights.map(cardHTML).join('')}</div>`:'')
+        +(rests.length?`<div class="lib-section-title">🍽 Restaurants</div><div class="card-grid">${rests.map(cardHTML).join('')}</div>`:'');
+  } else {
+    // Group by area – shows sights and restaurants near each other
+    areaMap.forEach((aItems, area)=>{
+      const sights=aItems.filter(x=>x.type==='sight');
+      const rests=aItems.filter(x=>x.type==='rest');
+      html+=`<div class="area-header">📍 ${area}</div>`;
+      if(sights.length) html+=`<div class="card-grid">${sights.map(cardHTML).join('')}</div>`;
+      if(rests.length) html+=`<div class="lib-section-title" style="margin-top:.3rem">🍽 In der Nähe essen</div><div class="card-grid">${rests.map(cardHTML).join('')}</div>`;
+    });
+  }
+  scr.innerHTML=html;
+  attachCardListeners(scr);
+}
+
+function tagCls(t,item){
+  if(t==='einfach'||t==='barrierefrei'||t==='sitzend') return 'ctag-easy';
+  if(t==='moderat') return 'ctag-mod';
+  if(t.includes('Veg')||t.includes('veg')||t.includes('vegan')||t.includes('🌿')) return 'ctag-veg';
+  if(t.includes('Fleisch')||t.includes('Rodízio')||t.includes('Ribs')||t.includes('🥩')||t.includes('Steak')||t.includes('Sol')) return 'ctag-meat';
+  if(item.type==='rest') return 'ctag-rest';
+  return 'ctag-tip';
+}
+
+function cardHTML(item){
+  const tags=item.t.map(t=>`<span class="ctag ${tagCls(t,item)}">${t}</span>`).join('');
+  const links=item.l.map(lk=>`<a class="card-link" href="${lk.u}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>${lk.n}</a>`).join('');
+  const rating=item.rating?`<span style="color:#c47a00;font-size:.63rem">${item.rating}</span>`:'';
+  const area=item.area?`<span style="font-size:.62rem;color:#2d7a52;font-weight:600">📍 ${item.area}</span>`:'';
+  const hours=item.h?`<span style="font-size:.62rem;color:#888">🕐 ${item.h}</span>`:'';
+  const dur=item.dur?`<span style="font-size:.62rem;color:#1a5ab0;font-weight:600;background:#e8f0fb;padding:1px 6px;border-radius:8px">⏱ ${item.dur}</span>`:'';
+  const meta=[rating,area,dur,hours].filter(Boolean).join(' · ');
+  return `<div class="card" data-id="${item.id}">
+    <div class="lp-ring"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" class="lp-circle"/></svg></div>
+    <div class="card-top">
+      <span class="card-emoji">${item.e}</span>
+      <div>
+        <div class="card-name">${item.n}</div>
+        ${meta?`<div class="card-meta">${meta}</div>`:''}
+        <div class="card-type">${item.type==='rest'?'Restaurant':'Aktivität'}</div>
+      </div>
+    </div>
+    <div class="card-desc">${item.d}</div>
+    <div class="card-tags">${tags}</div>
+    <div class="card-links">${links}</div>
+    <div class="drag-hint-badge">☰ halten</div>
+  </div>`;
+}
+
+function renderPlanner(){
+  const day=stations[curSt].days[curDay];
+  document.getElementById('plannerTitle').textContent=`${day.l} · ${day.t}`;
+  const plan=plans[curSt][curDay];
+  document.getElementById('timeline').innerHTML=SLOTS.map((time,si)=>{
+    const id=plan[si];
+    const item=id?stations[curSt].items.find(x=>x.id===id):null;
+    return `<div class="tl-slot">
+      <div class="tl-time-col"><div class="tl-time-label">${time}</div></div>
+      <div class="tl-line"><div class="tl-dot"></div></div>
+      <div class="tl-content">
+        <div class="drop-zone${item?' has-card':''}" data-slot="${si}">
+          ${item?placedHTML(item,si):'<span>ziehen …</span>'}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // attach drag on placed cards
+  document.querySelectorAll('.placed-wrap[data-id]').forEach(el=>attachCardListeners(el));
+}
+
+function placedHTML(item,si){
+  const links=item.l.map(lk=>`<a class="card-link" href="${lk.u}" target="_blank" rel="noopener">${lk.n}</a>`).join('');
+  return `<div class="placed-wrap" data-id="${item.id}" data-slot="${si}">
+    <button class="remove-btn" onclick="removeSlot(${si})">✕</button>
+    <div class="placed-card">
+      <div class="placed-name"><span>${item.e}</span>${item.n}</div>
+      <div class="placed-links">${links}</div>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// DRAG ENGINE – Long-press to initiate
+// ─────────────────────────────────────────────
+function attachCardListeners(container){
+  const els=container.querySelectorAll('.card[data-id],.placed-wrap[data-id]');
+  els.forEach(el=>{
+    el.addEventListener('touchstart', e=>onPressStart(e,el,true), {passive:true});
+    el.addEventListener('mousedown',  e=>onPressStart(e,el,false));
+  });
+}
+
+function onPressStart(e,el,isTouch){
+  if(e.target.closest('a')||e.target.closest('.remove-btn')) return;
+  if(!isTouch && e.button!==0) return;
+
+  const pt=isTouch?e.touches[0]:e;
+  drag.startX=pt.clientX; drag.startY=pt.clientY;
+  drag.didMove=false;
+  drag.isTouch=isTouch;
+  drag.pendingEl=el;
+
+  // Start long-press timer
+  drag.pressTimer=setTimeout(()=>{
+    if(!drag.didMove) activateDrag(el,isTouch);
+  }, LONG_PRESS_MS);
+
+  // Listen for move & end to cancel if user is scrolling
+  if(isTouch){
+    el.addEventListener('touchmove', onPressMove, {passive:true});
+    el.addEventListener('touchend',  onPressCancel, {once:true});
+    el.addEventListener('touchcancel',onPressCancel,{once:true});
+  } else {
+    window.addEventListener('mousemove', onPressMove);
+    window.addEventListener('mouseup',   onPressCancel, {once:true});
+  }
+}
+
+function onPressMove(e){
+  const pt=drag.isTouch?(e.touches?e.touches[0]:e):e;
+  const dx=Math.abs(pt.clientX-drag.startX);
+  const dy=Math.abs(pt.clientY-drag.startY);
+  // If finger moved more than 8px before threshold → cancel drag, let scroll happen
+  if(dx>8||dy>8){
+    drag.didMove=true;
+    cancelPressTimer();
+    // clean up move listener
+    if(drag.isTouch && drag.pendingEl){
+      drag.pendingEl.removeEventListener('touchmove',onPressMove);
+    } else {
+      window.removeEventListener('mousemove',onPressMove);
+    }
+  }
+}
+
+function onPressCancel(){
+  cancelPressTimer();
+  if(drag.pendingEl){
+    drag.pendingEl.removeEventListener('touchmove',onPressMove);
+    drag.pendingEl.classList.remove('drag-ready');
+  }
+  window.removeEventListener('mousemove',onPressMove);
+}
+
+function cancelPressTimer(){
+  if(drag.pressTimer){clearTimeout(drag.pressTimer);drag.pressTimer=null;}
+}
+
+function activateDrag(el,isTouch){
+  // Clean up press-phase listeners
+  if(el) el.removeEventListener('touchmove',onPressMove);
+  window.removeEventListener('mousemove',onPressMove);
+
+  const id=el.dataset.id;
+  const fromSlot=el.dataset.slot!==undefined?parseInt(el.dataset.slot):null;
+
+  // Use stored start position for offset
+  const rect=el.getBoundingClientRect();
+  drag.active=true; drag.id=id; drag.fromSlot=fromSlot; drag.sourceEl=el;
+  drag.offsetX=drag.startX-rect.left;
+  drag.offsetY=drag.startY-rect.top;
+
+  el.classList.add('is-dragging');
+
+  // Haptic feedback on iOS if available
+  if(window.navigator && navigator.vibrate) navigator.vibrate(30);
+
+  // Ghost
+  const item=stations[curSt].items.find(x=>x.id===id);
+  const g=document.createElement('div');
+  g.className='drag-ghost';
+  g.innerHTML=`<div style="display:flex;align-items:center;gap:.5rem"><span style="font-size:1.2rem">${item.e}</span><div><div style="font-weight:700;font-size:.84rem">${item.n}</div><div style="font-size:.66rem;color:#999;margin-top:2px">${item.type==='rest'?'Restaurant':'Aktivität'}</div></div></div>`;
+  g.style.left=(drag.startX-drag.offsetX)+'px';
+  g.style.top=(drag.startY-drag.offsetY)+'px';
+  document.body.appendChild(g);
+  drag.ghost=g;
+
+  // Now attach active drag listeners
+  if(isTouch){
+    document.addEventListener('touchmove',onDragMove,{passive:false});
+    document.addEventListener('touchend', onDragEnd);
+    document.addEventListener('touchcancel',onDragEnd);
+  } else {
+    document.addEventListener('mousemove',onDragMove);
+    document.addEventListener('mouseup',  onDragEnd);
+  }
+}
+
+function onDragMove(e){
+  if(!drag.active) return;
+  const pt=drag.isTouch?e.touches[0]:e;
+  if(drag.isTouch) e.preventDefault();
+  // Move ghost
+  drag.ghost.style.left=(pt.clientX-drag.offsetX)+'px';
+  drag.ghost.style.top=(pt.clientY-drag.offsetY)+'px';
+  // Highlight drop zones
+  document.querySelectorAll('.drop-zone').forEach(dz=>{
+    const r=dz.getBoundingClientRect();
+    dz.classList.toggle('drop-active',
+      pt.clientX>=r.left&&pt.clientX<=r.right&&pt.clientY>=r.top&&pt.clientY<=r.bottom);
+  });
+}
+
+function onDragEnd(e){
+  if(!drag.active) return;
+  const pt=drag.isTouch?(e.changedTouches?e.changedTouches[0]:e):e;
+  endDrag(pt.clientX,pt.clientY);
+}
+
+function endDrag(cx,cy){
+  if(drag.ghost){drag.ghost.remove();drag.ghost=null;}
+  if(drag.sourceEl) drag.sourceEl.classList.remove('is-dragging');
+  document.querySelectorAll('.drop-active').forEach(dz=>dz.classList.remove('drop-active'));
+
+  const dz=findDropZone(cx,cy);
+  if(dz){
+    const si=parseInt(dz.dataset.slot);
+    if(drag.fromSlot!==null&&drag.fromSlot!==si) plans[curSt][curDay][drag.fromSlot]=null;
+    plans[curSt][curDay][si]=drag.id;
+    renderPlanner();
+    renderLib();
+    toast('Eingetragen ✓');
+  }
+
+  drag.active=false;drag.id=null;drag.fromSlot=null;drag.sourceEl=null;
+  document.removeEventListener('touchmove',onDragMove);
+  document.removeEventListener('touchend',onDragEnd);
+  document.removeEventListener('touchcancel',onDragEnd);
+  document.removeEventListener('mousemove',onDragMove);
+  document.removeEventListener('mouseup',onDragEnd);
+}
+
+function findDropZone(cx,cy){
+  for(const dz of document.querySelectorAll('.drop-zone')){
+    const r=dz.getBoundingClientRect();
+    if(cx>=r.left&&cx<=r.right&&cy>=r.top&&cy<=r.bottom) return dz;
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────
+function setStation(idx,btn){
+  curSt=idx;curDay=0;
+  document.querySelectorAll('.s-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+  renderWeatherStrip();
+  renderWeatherBanner();
+}
+function setDay(idx){curDay=idx;renderDayBar();renderPlanner();renderWeatherStrip();renderWeatherBanner();}
+function filterLib(f,btn){
+  curFilter=f;
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderLib();
+}
+function removeSlot(si){plans[curSt][curDay][si]=null;renderPlanner();renderLib();}
+function clearPlan(){plans[curSt][curDay]=new Array(14).fill(null);renderPlanner();renderLib();toast('Tagesplan geleert');}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─────────────────────────────────────────────
+// WEATHER  (Open-Meteo – kostenlos, kein API-Key)
+// ─────────────────────────────────────────────
+const WX_STATIONS = [
+  { name:'Salvador',       lat:-12.9714, lon:-38.5014, start:'2026-06-27', end:'2026-06-30' },
+  { name:'Brasilia',       lat:-15.7801, lon:-47.9292, start:'2026-06-30', end:'2026-07-03' },
+  { name:'Manaus',         lat:-3.1019,  lon:-60.0250, start:'2026-07-03', end:'2026-07-08' },
+  { name:'Praia do Forte', lat:-12.5760, lon:-38.0069, start:'2026-07-08', end:'2026-07-17' },
+];
+
+let wxData = stations.map(s => s.days.map(() => null));
+let wxLoaded = false;
+
+function wxCodeToIcon(c) {
+  if (c === 0)   return '\u2600\uFE0F';
+  if (c <= 2)    return '\u26C5';
+  if (c === 3)   return '\u2601\uFE0F';
+  if (c <= 49)   return '\uD83C\uDF2B';
+  if (c <= 67)   return '\uD83C\uDF27';
+  if (c <= 77)   return '\u2744\uFE0F';
+  if (c <= 82)   return '\uD83C\uDF26';
+  if (c >= 95)   return '\u26C8';
+  return '\uD83C\uDF24';
+}
+
+function wxCodeToDesc(c) {
+  if (c === 0)  return 'Sonnig';
+  if (c === 1)  return 'Meist sonnig';
+  if (c === 2)  return 'Teils bew\u00F6lkt';
+  if (c === 3)  return 'Bew\u00F6lkt';
+  if (c <= 49)  return 'Nebel';
+  if (c <= 67)  return 'Regen';
+  if (c <= 77)  return 'Schneeregen';
+  if (c <= 82)  return 'Regenschauer';
+  if (c >= 95)  return 'Gewitter';
+  return 'Wechselhaft';
+}
+
+function wxAdvice(w, stIdx) {
+  if (!w) return [];
+  const tips = [];
+  if (w.wcode >= 95)
+    tips.push('\u26C8 <strong>Gewitter m\u00F6glich</strong> \u2013 Bootsausfl\u00FCge und Strand am Nachmittag meiden. Morgens starten!');
+  else if (w.rain >= 5 && stIdx === 2)
+    tips.push('\uD83C\uDF27 <strong>Regenschauer erwartet (' + w.rain.toFixed(0) + ' mm)</strong> \u2013 Regenponcho einpacken. Manaus-Museen oder Opernhaus f\u00FCr den Nachmittag einplanen.');
+  else if (w.rain >= 5)
+    tips.push('\uD83C\uDF27 <strong>Regen m\u00F6glich (' + w.rain.toFixed(0) + ' mm)</strong> \u2013 Regenjacke bereithalten. Nachmittags klimatisierte Aktivit\u00E4ten bevorzugen.');
+  if (w.tmax >= 33)
+    tips.push('\uD83C\uDF21 <strong>Sehr hei\u00DF (' + w.tmax + ' \u00B0C)</strong> \u2013 Mittagspause 12\u201315 Uhr im Schatten einplanen. Viel Wasser trinken!');
+  if (w.wcode <= 1 && w.tmax < 33) {
+    tips.push('\u2600\uFE0F <strong>Ideales Ausflugswetter</strong> \u2013 perfekter Tag f\u00FCr Outdoor-Aktivit\u00E4ten. LSF 50+ nicht vergessen!');
+    if (stIdx === 0) tips.push('\uD83C\uDF05 Heute Abend besonders sch\u00F6ner Sonnenuntergang am Farol da Barra.');
+    if (stIdx === 1) tips.push('\uD83C\uDFDB Idealer Tag f\u00FCr die Esplanada und Niemeyer-Architektur im Freien.');
+    if (stIdx === 3) tips.push('\uD83D\uDC33 Perfektes Wetter f\u00FCr die Walbeobachtungs-Tour!');
+  }
+  return tips;
+}
+
+function dateRange(start, end) {
+  const dates = [];
+  let d = new Date(start + 'T12:00:00Z');
+  const e = new Date(end + 'T12:00:00Z');
+  while (d < e) { dates.push(d.toISOString().slice(0,10)); d = new Date(d.getTime()+86400000); }
+  return dates;
+}
+
+async function loadWeather() {
+  const strip   = document.getElementById('wxStrip');
+  const loading = document.getElementById('wxLoading');
+  try {
+    const results = await Promise.all(WX_STATIONS.map(st => {
+      const url = 'https://api.open-meteo.com/v1/forecast'
+        + '?latitude=' + st.lat + '&longitude=' + st.lon
+        + '&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum'
+        + '&timezone=America%2FSao_Paulo'
+        + '&forecast_days=16'
+        + '&start_date=' + st.start + '&end_date=' + st.end;
+      return fetch(url).then(r => r.json()).then(d => ({ st, d, stIdx: WX_STATIONS.indexOf(st) }));
+    }));
+
+    results.forEach(({ st, d, stIdx }) => {
+      const daily = d.daily;
+      if (!daily || !daily.time) return;
+      const dates = dateRange(st.start, st.end);
+      dates.forEach((date, di) => {
+        const ai = daily.time.indexOf(date);
+        if (ai < 0) return;
+        wxData[stIdx][di] = {
+          date,
+          icon:  wxCodeToIcon(daily.weathercode[ai]),
+          desc:  wxCodeToDesc(daily.weathercode[ai]),
+          tmin:  Math.round(daily.temperature_2m_min[ai]),
+          tmax:  Math.round(daily.temperature_2m_max[ai]),
+          rain:  daily.precipitation_sum[ai] || 0,
+          wcode: daily.weathercode[ai],
+        };
+      });
+    });
+
+    wxLoaded = true;
+    loading.style.display = 'none';
+    strip.style.display = 'flex';
+    renderWeatherStrip();
+    renderWeatherBanner();
+
+  } catch(err) {
+    const isLocal = location.protocol === 'file:';
+    if (isLocal) {
+      loading.innerHTML = '\u26A0\uFE0F <strong>Wetter nicht verf\u00FCgbar</strong> \u2013 Datei lokal ge\u00F6ffnet (file://). Bitte \u00FCber GitHub Pages aufrufen f\u00FCr Live-Wetter.';
+    } else {
+      loading.textContent = '\u26A0\uFE0F Wetterdaten nicht verf\u00FCgbar \u2013 bitte WLAN pr\u00FCfen und Seite neu laden.';
+    }
+    loading.style.color = '#c0392b';
+    loading.style.display = 'block';
+    console.warn('Weather load failed:', err);
+  }
+}
+
+function renderWeatherStrip() {
+  if (!wxLoaded) return;
+  const strip = document.getElementById('wxStrip');
+  strip.innerHTML = stations[curSt].days.map((d, i) => {
+    const w = wxData[curSt][i];
+    const cls = i === curDay ? ' wx-active' : '';
+    if (!w) return '<div class="wx-day' + cls + '" onclick="setDay(' + i + ')">'
+      + '<span class="wx-label">' + d.l + '</span>'
+      + '<span class="wx-icon">\u2013</span>'
+      + '<span class="wx-tmp">k.A.</span></div>';
+    return '<div class="wx-day' + cls + '" onclick="setDay(' + i + ')">'
+      + '<span class="wx-label">' + d.l + '</span>'
+      + '<span class="wx-icon">' + w.icon + '</span>'
+      + '<span class="wx-tmp">' + w.tmin + '\u2013' + w.tmax + '\u00B0</span>'
+      + '<span class="wx-rain">' + (w.rain > 0 ? '\uD83D\uDCA7' + w.rain.toFixed(0) + 'mm' : '') + '</span>'
+      + '</div>';
+  }).join('');
+}
+
+function renderWeatherBanner() {
+  if (!wxLoaded) return;
+  const banner = document.getElementById('wxBanner');
+  const w = wxData[curSt][curDay];
+  if (!w) { banner.className = 'wx-banner'; return; }
+
+  const tips = wxAdvice(w, curSt);
+  let bg = '#f0f7ff', border = '#c8daf5';
+  if (w.wcode >= 95)     { bg = '#fff0f0'; border = '#f5a0a0'; }
+  else if (w.rain >= 5)  { bg = '#f0f4ff'; border = '#a0b8f5'; }
+  else if (w.tmax >= 33) { bg = '#fff8e8'; border = '#f5d060'; }
+  else if (w.wcode <= 1) { bg = '#f0fff4'; border = '#80d4a0'; }
+
+  banner.style.background = bg;
+  banner.style.borderBottom = '1px solid ' + border;
+  banner.className = 'wx-banner visible';
+  banner.innerHTML = '<span class="wx-banner-icon">' + w.icon + '</span>'
+    + '<div class="wx-banner-text">'
+    + '<strong>' + w.desc + ' \u00B7 ' + w.tmin + '\u2013' + w.tmax + ' \u00B0C'
+    + (w.rain > 0 ? ' \u00B7 \uD83D\uDCA7 ' + w.rain.toFixed(0) + ' mm' : '') + '</strong>'
+    + (tips.length ? '<div style="margin-top:5px">' + tips.map(t => '<div style="margin-bottom:3px">' + t + '</div>').join('') + '</div>' : '')
+    + '</div>';
+}
+
+
+render();
+loadWeather();
+</script>
+</body>
+</html>
